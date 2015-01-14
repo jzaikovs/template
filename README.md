@@ -12,3 +12,9 @@ text (html) renderimg engine
 {for x#}...{#for x}
 ```
 
+
+
+# TODO
+
+* link var tokents to language database, syntax already supported with @
+* 

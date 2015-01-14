@@ -1,7 +1,7 @@
 package template
 
 import (
-	. "github.com/thejoker0/t"
+	. "github.com/jzaikovs/t"
 	"testing"
 )
 

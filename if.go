@@ -5,12 +5,12 @@ import (
 	"reflect"
 )
 
-type tokenShow struct {
-	*token
+type t_token_show struct {
+	*t_token
 	invert bool
 }
 
-func (this *tokenShow) Render(rendering *renderState, binds Map) {
+func (this *t_token_show) Render(rendering *renderState, binds Map) {
 	bind, ok := binds[this.name]
 	if !ok {
 		bind, ok = rendering.globals[this.name]

@@ -6,11 +6,11 @@ import (
 	"log"
 )
 
-type tokenLoop struct {
-	*token
+type t_token_loop struct {
+	*t_token
 }
 
-func (this *tokenLoop) Render(rendering *renderState, binds Map) {
+func (this *t_token_loop) Render(rendering *renderState, binds Map) {
 	bind, ok := binds[this.name]
 	if !ok {
 		return

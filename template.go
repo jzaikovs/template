@@ -9,7 +9,7 @@ import (
 
 type Template struct {
 	name      string
-	tokens    []tokener
+	tokens    []i_token
 	cache     string
 	cachetime time.Time
 	static    string

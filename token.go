@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type token struct {
+type t_token struct {
 	name string
 	// token is opening tag (for, if)
 	opened bool
@@ -16,7 +16,7 @@ type token struct {
 	structure bool
 
 	// if token is part of (for, if), it my contain child tokens
-	tokens []tokener
+	tokens []i_token
 
 	// field path in structure
 	fields []string
@@ -26,12 +26,12 @@ type token struct {
 	langval string
 }
 
-func newEmptyToken(template string) *token {
-	return &token{name: template}
+func newEmptyToken(template string) *t_token {
+	return &t_token{name: template}
 }
 
-func newToken(code string, opens, closes bool) (this *token) {
-	this = &token{code, opens, closes, false, nil, nil, false, ""}
+func newToken(code string, opens, closes bool) (this *t_token) {
+	this = &t_token{code, opens, closes, false, nil, nil, false, ""}
 
 	// check if token is structure {struct.field.field}
 	if i := strings.Index(code, "."); i >= 0 { // if contains dot then is structure
@@ -56,51 +56,51 @@ func newToken(code string, opens, closes bool) (this *token) {
 	return this
 }
 
-func (this *token) Render(buffer *renderState, binds Map) {
+func (this *t_token) Render(buffer *renderState, binds Map) {
 	buffer.WriteString(this.name)
 }
 
-func (this *token) Tokens() []tokener {
+func (this *t_token) Tokens() []i_token {
 	return this.tokens
 }
 
-func (this *token) IsOpen() bool {
+func (this *t_token) IsOpen() bool {
 	return this.opened
 }
 
-func (this *token) IsClose() bool {
+func (this *t_token) IsClose() bool {
 	return this.cosed
 }
 
-func (this *token) IsPair(other tokener) bool {
+func (this *t_token) IsPair(other i_token) bool {
 	if other == nil {
 		return false
 	}
 	return this.Name() == other.Name() && ((this.IsOpen() && other.IsClose()) || (other.IsOpen() && this.IsClose()))
 }
 
-func (this *token) Name() string {
+func (this *t_token) Name() string {
 	return this.name
 }
 
-func (this *token) AddTokens(tokens []tokener) {
+func (this *t_token) AddTokens(tokens []i_token) {
 	if this.tokens == nil {
-		this.tokens = make([]tokener, 0)
+		this.tokens = make([]i_token, 0)
 	}
 
 	this.tokens = append(this.tokens, tokens...)
 }
 
-func (this *token) String() string {
+func (this *t_token) String() string {
 	return fmt.Sprintf("{o:%v|c:%v|n:%s|c:%v|s:%v|f:%v}", this.opened, this.cosed, this.name, this.tokens, this.structure, this.fields)
 }
 
-func (this *token) Done() {
+func (this *t_token) Done() {
 	this.opened = false
 	this.cosed = false
 }
 
-func (this *token) bindFields(s interface{}, render func(interface{})) {
+func (this *t_token) bindFields(s interface{}, render func(interface{})) {
 	m := convert_to_map(s)
 	if m == nil {
 		return
@@ -126,7 +126,7 @@ func (this *token) bindFields(s interface{}, render func(interface{})) {
 	render(val)
 }
 
-func (this *token) readStruc(bind interface{}) (b interface{}) {
+func (this *t_token) readStruc(bind interface{}) (b interface{}) {
 	if this.structure {
 		this.bindFields(bind, func(val interface{}) {
 			b = val
@@ -137,7 +137,7 @@ func (this *token) readStruc(bind interface{}) (b interface{}) {
 	return
 }
 
-func (this *token) writeString(rendering *renderState, val interface{}) {
+func (this *t_token) writeString(rendering *renderState, val interface{}) {
 	switch v := val.(type) {
 	case *int64:
 		rendering.WriteString(fmt.Sprint(*v))

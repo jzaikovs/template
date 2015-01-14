@@ -6,26 +6,29 @@ import (
 	"strings"
 )
 
-type tokener interface {
+const token_core_exp = `{#?((if|ifn|for|include) )?(@?[\w\._]+)#?}`
+
+var rexp_token = regexp.MustCompile(`<!--` + token_core_exp + `-->|` + token_core_exp)
+
+type i_token interface {
 	Render(*renderState, Map)
-	Tokens() []tokener
+	Tokens() []i_token
 	IsOpen() bool
 	IsClose() bool
-	IsPair(tokener) bool
+	IsPair(i_token) bool
 	Name() string
-	AddTokens([]tokener)
+	AddTokens([]i_token)
 	Done()
 }
 
-func tokensParse(code string) []tokener {
-	token := regexp.MustCompile(`<!--{#?((if|ifn|for) )?(@?[\w\._]+)#?}-->|{#?((if|ifn|for) )?(@?[\w\._]+)#?}`)
-	tokens := make([]tokener, 0)
+func tokensParse(code string) []i_token {
+	tokens := make([]i_token, 0)
 	var (
 		typ, name string
 		last      = 0
 	)
 
-	for _, v := range token.FindAllStringSubmatchIndex(code, -1) {
+	for _, v := range rexp_token.FindAllStringSubmatchIndex(code, -1) {
 		match := make([][]int, 0, len(v)/2)
 		// filtering and moving into groups
 		for i := 0; i < len(v); i += 2 {
@@ -51,7 +54,7 @@ func tokensParse(code string) []tokener {
 		tag = strings.TrimPrefix(tag, "<!--")
 		tag = strings.TrimSuffix(tag, "-->")
 
-		tokens = append(tokens, tokensNew(tag, typ, name))
+		tokens = append(tokens, create_token(tag, typ, name))
 		last = match[0][1]
 	}
 
@@ -59,14 +62,13 @@ func tokensParse(code string) []tokener {
 	return tokens
 }
 
-func tokensCompile(tokens []tokener) []tokener {
+func tokensCompile(tokens []i_token) []i_token {
 
-	var last_open tokener = nil
+	var last_open i_token = nil
 	var last_idx = -1
 
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].IsOpen() {
-
 			last_open = tokens[i]
 			last_idx = i
 		}
@@ -93,21 +95,23 @@ func tokensCompile(tokens []tokener) []tokener {
 	return tokens
 }
 
-func tokensNew(full, typ, name string) tokener {
+func create_token(full, typ, name string) i_token {
 	switch typ {
 	case "if":
-		return &tokenShow{newToken(name, full[len(full)-2] == '#', full[1] == '#'), false}
+		return &t_token_show{newToken(name, full[len(full)-2] == '#', full[1] == '#'), false}
 	case "ifn":
-		return &tokenShow{newToken(name, full[len(full)-2] == '#', full[1] == '#'), true}
+		return &t_token_show{newToken(name, full[len(full)-2] == '#', full[1] == '#'), true}
 	case "for":
-		return &tokenLoop{newToken(name, full[len(full)-2] == '#', full[1] == '#')}
+		return &t_token_loop{newToken(name, full[len(full)-2] == '#', full[1] == '#')}
+	case "include":
+		return new_t_token_include(name)
 	default:
-		return newtokenValue(name)
+		return new_t_token_var(name)
 	}
 }
 
 // function for recursive rendering
-func tokensRender(buffer *renderState, tokens []tokener, binds Map) {
+func tokensRender(buffer *renderState, tokens []i_token, binds Map) {
 	for _, token := range tokens {
 		token.Render(buffer, binds)
 	}
