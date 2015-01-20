@@ -12,12 +12,12 @@ type Template struct {
 	tokens    []i_token
 	cache     string
 	cachetime time.Time
-	static    string
+	static    map[string]string
 }
 
 func New() *Template {
 	tmp := new(Template)
-
+	tmp.static = make(map[string]string)
 	return tmp
 }
 
@@ -53,9 +53,11 @@ func (this *Template) RenderCache(t time.Time, binds Map) string {
 	return this.cache
 }
 
-func (this *Template) Static(binds Map) string {
-	if len(this.static) == 0 {
-		this.static = this.Render(binds)
+func (this *Template) Static(key string, binds Map) string {
+	static, ok := this.static[key]
+	if !ok {
+		static = this.Render(binds)
+		this.static[key] = static
 	}
-	return this.static
+	return static
 }

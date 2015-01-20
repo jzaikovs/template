@@ -1,0 +1,14 @@
+{if show_check#}AAA{#if show_check}
+{ifn show_check#}BBB{#ifn show_check}
+{for arr#}X{#for arr}
+{include inc}
+{ifn struct_is_nil#}NIL{#ifn struct_is_nil}
+{dummy.Id}
+{dummy.BaseID}
+{dummy.Str}
+{dummy.Time}
+{dummy.Next.Id}
+{for arr#}{GLOBAL}{#for arr}
+{@lang_token}
+{map.a}
+{map.b}

@@ -1,0 +1,7 @@
+{
+    "templates": {
+        "test": "./test/test.txt",
+        "inc": "./test/include.txt"
+    },
+    "handle_lang": true
+}
