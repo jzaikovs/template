@@ -1,15 +1,17 @@
 package template
 
 import (
-	. "github.com/jzaikovs/t"
 	"io/ioutil"
 	"log"
 	"time"
+
+	"github.com/jzaikovs/t"
 )
 
+// Template represents single compiled template
 type Template struct {
 	name      string
-	tokens    []i_token
+	tokens    []Token
 	cache     string
 	cachetime time.Time
 	static    map[string]string
@@ -21,43 +23,43 @@ func New() *Template {
 	return tmp
 }
 
-func (this *Template) Compile(template string) {
-	this.tokens = tokensCompile(tokensParse(template))
+func (template *Template) Compile(code string) {
+	template.tokens = tokensCompile(tokensParse(code))
 }
 
 // Method for view to load file data
-func (this *Template) CompileFromFile(path string) error {
+func (template *Template) CompileFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	this.Compile(string(data))
+	template.Compile(string(data))
 	return nil
 }
 
-// Method for rendering view
-func (this *Template) Render(binds Map) string {
+// Render renders template using passed data
+func (template *Template) Render(binds t.Map) string {
 	buffer := newRendering(binds)
-	tokensRender(buffer, this.tokens, binds)
+	tokensRender(buffer, template.tokens, binds)
 	return buffer.String()
 }
 
-func (this *Template) RenderCache(t time.Time, binds Map) string {
-	if this.cachetime.Before(t) {
+func (template *Template) RenderCache(t time.Time, binds t.Map) string {
+	if template.cachetime.Before(t) {
 		// cache is older than time
-		log.Println("cache-miss on", this.name)
-		this.cache = this.Render(binds)
-		this.cachetime = time.Now()
+		log.Println("cache-miss on", template.name)
+		template.cache = template.Render(binds)
+		template.cachetime = time.Now()
 	}
-	return this.cache
+	return template.cache
 }
 
-func (this *Template) Static(key string, binds Map) string {
-	static, ok := this.static[key]
+func (template *Template) Static(key string, binds t.Map) string {
+	static, ok := template.static[key]
 	if !ok {
-		static = this.Render(binds)
-		this.static[key] = static
+		static = template.Render(binds)
+		template.static[key] = static
 	}
 	return static
 }

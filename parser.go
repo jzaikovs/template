@@ -1,29 +1,31 @@
 package template
 
 import (
-	. "github.com/jzaikovs/t"
 	"regexp"
 	"strings"
+
+	"github.com/jzaikovs/t"
 )
 
 const token_core_exp = `{#?((if|ifn|for|include) )?(@?[\w\._]+)#?}`
 
 var rexp_token = regexp.MustCompile(`<!--` + token_core_exp + `-->|` + token_core_exp)
 
-type i_token interface {
-	Render(*renderState, Map)
-	Tokens() []i_token
+// Token is interface for token strucktures in template
+type Token interface {
+	Render(*renderState, t.Map)
+	Tokens() []Token
 	IsOpen() bool
 	IsClose() bool
-	IsPair(i_token) bool
+	IsPair(Token) bool
 	Name() string
-	AddTokens([]i_token)
+	AddTokens([]Token)
 	Done()
 }
 
-func tokensParse(code string) []i_token {
-	tokens := make([]i_token, 0)
+func tokensParse(code string) []Token {
 	var (
+		tokens    []Token
 		typ, name string
 		last      = 0
 	)
@@ -54,7 +56,7 @@ func tokensParse(code string) []i_token {
 		tag = strings.TrimPrefix(tag, "<!--")
 		tag = strings.TrimSuffix(tag, "-->")
 
-		tokens = append(tokens, create_token(tag, typ, name))
+		tokens = append(tokens, createToken(tag, typ, name))
 		last = match[0][1]
 	}
 
@@ -62,32 +64,33 @@ func tokensParse(code string) []i_token {
 	return tokens
 }
 
-func tokensCompile(tokens []i_token) []i_token {
-
-	var last_open i_token = nil
-	var last_idx = -1
+func tokensCompile(tokens []Token) []Token {
+	var (
+		lastOpenToken Token
+		lastIdx       = -1
+	)
 
 	for i := 0; i < len(tokens); i++ {
 		if tokens[i].IsOpen() {
-			last_open = tokens[i]
-			last_idx = i
+			lastOpenToken = tokens[i]
+			lastIdx = i
 		}
 
 		if tokens[i].IsClose() {
-			if last_open == nil {
+			if lastOpenToken == nil {
 				//todo : found closing tag without opening tag
 				panic("found closing tag without opening tag")
 			}
 
-			if tokens[i].IsPair(last_open) {
-				// found closing tag to last_open
-				tokens[last_idx].AddTokens(tokens[last_idx+1 : i]) //todo -1 ?
-				tokens[last_idx].Done()
-				tokens = append(tokens[:last_idx+1], tokens[i+1:]...)
+			if tokens[i].IsPair(lastOpenToken) {
+				// found closing tag to lastOpenToken
+				tokens[lastIdx].AddTokens(tokens[lastIdx+1 : i]) //todo -1 ?
+				tokens[lastIdx].Done()
+				tokens = append(tokens[:lastIdx+1], tokens[i+1:]...)
 
 				i = 0 // start from new
-				last_idx = -1
-				last_open = nil
+				lastIdx = -1
+				lastOpenToken = nil
 			}
 		}
 	}
@@ -95,23 +98,23 @@ func tokensCompile(tokens []i_token) []i_token {
 	return tokens
 }
 
-func create_token(full, typ, name string) i_token {
+func createToken(full, typ, name string) Token {
 	switch typ {
 	case "if":
-		return &t_token_show{newToken(name, full[len(full)-2] == '#', full[1] == '#'), false}
+		return &tokenShowStruct{newToken(name, full[len(full)-2] == '#', full[1] == '#'), false}
 	case "ifn":
-		return &t_token_show{newToken(name, full[len(full)-2] == '#', full[1] == '#'), true}
+		return &tokenShowStruct{newToken(name, full[len(full)-2] == '#', full[1] == '#'), true}
 	case "for":
-		return &t_token_loop{newToken(name, full[len(full)-2] == '#', full[1] == '#')}
+		return &tokenLoopStruct{newToken(name, full[len(full)-2] == '#', full[1] == '#')}
 	case "include":
-		return new_t_token_include(name)
+		return newIncludeToken(name)
 	default:
-		return new_t_token_var(name)
+		return newVarToken(name)
 	}
 }
 
 // function for recursive rendering
-func tokensRender(buffer *renderState, tokens []i_token, binds Map) {
+func tokensRender(buffer *renderState, tokens []Token, binds t.Map) {
 	for _, token := range tokens {
 		token.Render(buffer, binds)
 	}

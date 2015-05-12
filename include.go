@@ -1,26 +1,26 @@
 package template
 
 import (
-	. "github.com/jzaikovs/t"
+	"github.com/jzaikovs/t"
 )
 
-type t_token_include struct {
-	*t_token
+type tokenIncludeStruct struct {
+	*tokenStruct
 	template *Template
 }
 
-func new_t_token_include(name string) (this *t_token_include) {
-	this = new(t_token_include)
-	this.t_token = newToken(name, false, false)
+func newIncludeToken(name string) (token *tokenIncludeStruct) {
+	token = new(tokenIncludeStruct)
+	token.tokenStruct = newToken(name, false, false)
 	return
 }
 
-func (this *t_token_include) Render(rendering *renderState, binds Map) {
-	if this.template == nil {
-		if this.template = Get(this.Name()); this.template == nil {
+func (token *tokenIncludeStruct) Render(rendering *renderState, binds t.Map) {
+	if token.template == nil {
+		if token.template = Get(token.Name()); token.template == nil {
 			panic("include can't be found")
 		}
 	}
 
-	this.writeString(rendering, this.template.Render(binds))
+	token.writeString(rendering, token.template.Render(binds))
 }

@@ -10,8 +10,17 @@ import (
 var (
 	templates = make(map[string]*Template)
 	lock      sync.RWMutex
+	Config    = new(configStruct)
 )
 
+type configStruct struct {
+	Templates map[string]string `json:"templates"`
+	// TODO: handle multiple languages
+	HandleLang bool              `json:"handle_lang"`
+	Dictionary map[string]string `json:"dictionary"`
+}
+
+// Get returns template with specific name
 func Get(name string) *Template {
 	lock.RLock()
 	defer lock.RUnlock()
@@ -29,15 +38,6 @@ func addTemplate(name string, template *Template) {
 
 	templates[name] = template
 }
-
-type config struct {
-	Templates map[string]string `json:"templates"`
-	// todo: handle multiple languages
-	HandleLang bool              `json:"handle_lang"`
-	Dictionary map[string]string `json:"dictionary"`
-}
-
-var Config = new(config)
 
 func init() {
 	bytes, err := ioutil.ReadFile("template.json")

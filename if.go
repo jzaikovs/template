@@ -1,34 +1,35 @@
 package template
 
 import (
-	. "github.com/jzaikovs/t"
 	"reflect"
+
+	"github.com/jzaikovs/t"
 )
 
-type t_token_show struct {
-	*t_token
+type tokenShowStruct struct {
+	*tokenStruct
 	invert bool
 }
 
-func (this *t_token_show) Render(rendering *renderState, binds Map) {
-	bind, ok := binds[this.name]
+func (token *tokenShowStruct) Render(rendering *renderState, binds t.Map) {
+	bind, ok := binds[token.name]
 	if !ok {
-		bind, ok = rendering.globals[this.name]
+		bind, ok = rendering.globals[token.name]
 	}
 
 	if !ok {
-		if this.invert {
+		if token.invert {
 			// bind non boolean bind then render
-			tokensRender(rendering, this.tokens, binds)
+			tokensRender(rendering, token.tokens, binds)
 		}
 		return // if bind doesn't exists then there is nothing to render
 	}
 
-	switch v := this.readStruc(bind).(type) {
+	switch v := token.readStruc(bind).(type) {
 	case bool:
-		if v != this.invert {
+		if v != token.invert {
 			// if bind is boolean then render only if it is true
-			tokensRender(rendering, this.tokens, binds)
+			tokensRender(rendering, token.tokens, binds)
 		}
 	default:
 		val := reflect.ValueOf(v)
@@ -36,10 +37,10 @@ func (this *t_token_show) Render(rendering *renderState, binds Map) {
 		if val.Kind() == reflect.Ptr {
 			isnil = val.IsNil()
 		}
-		if !isnil && !this.invert {
-			tokensRender(rendering, this.tokens, binds)
-		} else if isnil && this.invert {
-			tokensRender(rendering, this.tokens, binds)
+		if !isnil && !token.invert {
+			tokensRender(rendering, token.tokens, binds)
+		} else if isnil && token.invert {
+			tokensRender(rendering, token.tokens, binds)
 		}
 	}
 }

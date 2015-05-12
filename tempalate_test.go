@@ -1,8 +1,10 @@
 package template
 
 import (
-	. "github.com/jzaikovs/t"
 	"testing"
+	"time"
+
+	. "github.com/jzaikovs/t"
 )
 
 func TestTokenShow(t *testing.T) {
@@ -21,6 +23,19 @@ func TestTokenShow(t *testing.T) {
 	b = "FOO"
 	if a != b {
 		t.Errorf("\na:%s\nb:%s\n", a, b)
+	}
+}
+
+func TestTokenBinds(t *testing.T) {
+	now := time.Now()
+	template := New()
+	template.Compile(`{time}`)
+	data := map[string]interface{}{
+		"time": now,
+	}
+
+	if template.Render(data) != now.String() {
+		t.Error("time.Time won't render correctly")
 	}
 }
 
